@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>EcoHabit</title>
+<style>
+:root{--bg:#eaf6ea;--g:#2e6b31;--gl:#d7edd8;--gb:#b5dbb7;--t:#1b3a1d;--tg:#5e7560}
+*{box-sizing:border-box;margin:0}
+body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--t)}
+#app{max-width:480px;margin:0 auto;min-height:100vh;padding:max(20px,env(safe-area-inset-top)) 20px 90px}
+h1{font-size:26px;line-height:1.2}
+h2{font-size:18px;margin:22px 0 10px}
+.muted{color:var(--tg);font-size:14px}
+.card{background:#fff;border:1px solid var(--gb);border-radius:16px;padding:14px;margin-bottom:12px}
+.row{display:flex;align-items:center;gap:12px;cursor:pointer}
+.ico{width:44px;height:44px;border-radius:12px;background:var(--gl);display:grid;place-items:center;font-size:22px;flex:none}
+.btn{display:flex;justify-content:center;align-items:center;gap:8px;width:100%;height:52px;border-radius:26px;border:2px solid var(--g);background:var(--g);color:#fff;font-size:16px;font-weight:600;cursor:pointer;margin-top:8px}
+.btn.out{background:transparent;color:var(--g)}
+.btn:disabled{opacity:.5}
+.ring{width:150px;height:150px;border-radius:50%;margin:18px auto;display:grid;place-items:center;background:conic-gradient(var(--g) calc(var(--p)*1%),var(--gl) 0)}
+.ring>div{width:118px;height:118px;border-radius:50%;background:var(--bg);display:grid;place-items:center;text-align:center;padding-top:14px}
+.ring b{display:block;font-size:38px}
+input{width:100%;height:46px;border-radius:14px;border:1px solid var(--gb);padding:0 14px;font-size:16px;margin:14px 0 10px;background:#fff}
+.chips{display:flex;gap:8px;overflow-x:auto;margin-bottom:14px}
+.chip{border:1px solid var(--gb);background:#fff;border-radius:18px;padding:8px 14px;font-size:14px;color:var(--t);white-space:nowrap}
+.chip.on{background:var(--g);color:#fff;border-color:var(--g)}
+.back{border:0;background:none;color:var(--g);font-size:16px;font-weight:600;margin-bottom:12px}
+.hero{height:170px;border-radius:20px;background:var(--gl);display:grid;place-items:center;font-size:84px;margin-bottom:16px}
+.two,.three{display:grid;gap:10px}
+.two{grid-template-columns:1fr 1fr}
+.three{grid-template-columns:repeat(3,1fr);margin-top:16px}
+.st{text-align:center;margin:0}
+.st b{display:block;font-size:24px}
+.chart{display:flex;gap:6px;height:170px}
+.col{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:12px;color:var(--tg)}
+.bw{flex:1;width:100%;display:flex;align-items:flex-end;justify-content:center}
+.bar{width:70%;background:#7fb182;border-radius:6px 6px 0 0}
+.bar.on{background:var(--g)}
+.center{display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px;min-height:85vh;justify-content:center}
+.center .card{width:100%;text-align:left}
+.badge{width:132px;height:132px;border-radius:50%;background:var(--gl);display:grid;place-items:center;margin-bottom:10px}
+.badge div{width:96px;height:96px;border-radius:50%;background:var(--g);color:#fff;font-size:56px;display:grid;place-items:center}
+nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;display:flex;background:#fff;border-top:1px solid var(--gb);padding-bottom:env(safe-area-inset-bottom)}
+nav button{flex:1;border:0;background:none;padding:10px 0;font-size:20px;color:var(--tg);display:flex;flex-direction:column;align-items:center;gap:2px}
+nav span{font-size:12px}
+nav .on{color:var(--g);font-weight:700}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+const H=[
+{id:1,n:"Reusable Bag",c:"Shopping",i:"🛍️",p:10,kg:.1,s:"5 plastic bags",d:"Use a cloth bag instead of plastic ones when you go shopping.",done:false},
+{id:2,n:"Waste Sorting",c:"Waste",i:"♻️",p:15,kg:.5,s:"2 kg of mixed waste",d:"Sort paper, plastic and glass into the right bins.",done:true},
+{id:3,n:"Water Saving",c:"Water",i:"💧",p:10,kg:.2,s:"12 liters of water",d:"Turn off the tap while you brush your teeth.",done:true},
+{id:4,n:"Bike Ride",c:"Transport",i:"🚲",p:20,kg:1,s:"1 kg of CO₂",d:"Ride a bike or walk instead of taking a car.",done:false},
+{id:5,n:"Lights Off",c:"Home",i:"💡",p:5,kg:.1,s:"1 kWh of energy",d:"Switch off the lights when you leave the room.",done:true}
+];
+const C=["All","Shopping","Waste","Water","Transport","Home"];
+const S={habits:12,points:120,kg:3};
+const W=[3,5,2,6,4,7,3],D=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"],T=(new Date().getDay()+6)%7;
+let screen="home",cur=1,filter="All",qs="";
+const $app=document.getElementById("app");
+const byId=id=>H.find(h=>h.id==id);
+
+const list=()=>H.filter(h=>(filter=="All"||h.c==filter)&&h.n.toLowerCase().includes(qs.toLowerCase())).map(h=>`
+<div class="card row" onclick="openHabit(${h.id})"><div class="ico">${h.i}</div>
+<div style="flex:1"><b>${h.n}</b><div class="muted">${h.c} · +${h.p} eco-points</div></div><span>${h.done?"✅":"›"}</span></div>`).join("")||'<p class="muted">No habits found. Try another word.</p>';
+
+const achievements=()=>[["🌱","First habit",S.habits>=1],["⭐","100 eco-points",S.points>=100],["🚲","Eco commuter",byId(4).done],["🔥","7-day streak",false]].map(([i,n,u])=>`
+<div class="card row" style="opacity:${u?1:.5}"><div class="ico">${i}</div><b>${n}</b><span class="muted" style="margin-left:auto">${u?"Unlocked":"Locked"}</span></div>`).join("");
+
+const V={
+home(){const n=H.filter(h=>h.done).length;return `
+<p class="muted">Welcome back</p><h1>Hello, Anya! 👋</h1>
+<div class="ring" style="--p:${n/H.length*100}"><div><div><b>${n}</b><span class="muted">out of ${H.length} habits</span></div></div></div>
+<h2>Today</h2>${H.map(h=>`<div class="card row" onclick="openHabit(${h.id})"><div class="ico">${h.i}</div><b style="flex:1">${h.n}</b><span>${h.done?"✅":"⚪"}</span></div>`).join("")}
+<button class="btn" onclick="go('catalog')">＋ Log Habit</button>`},
+
+catalog(){return `
+<h1>Habit Catalog</h1>
+<input id="srch" placeholder="Search habits" value="${qs.replace(/"/g,"&quot;")}" oninput="qs=this.value;document.getElementById('list').innerHTML=list()">
+<div class="chips">${C.map(c=>`<button class="chip ${c==filter?"on":""}" onclick="filter='${c}';render()">${c}</button>`).join("")}</div>
+<div id="list">${list()}</div>`},
+
+detail(){const h=byId(cur);return `
+<button class="back" onclick="go('catalog')">← Back</button>
+<div class="hero">${h.i}</div><h1>${h.n}</h1><p class="muted" style="margin:6px 0 16px">${h.d}</p>
+<div class="two"><div class="card"><div class="muted">You save</div><b>${h.s}</b></div><div class="card"><div class="muted">Reward</div><b>+${h.p} eco-points</b></div></div>
+<button class="btn" ${h.done?"disabled":""} onclick="complete()">${h.done?"Completed ✓":"Mark as completed"}</button>`},
+
+done(){const h=byId(cur);return `
+<div class="center"><div class="badge"><div>✓</div></div><h1>Excellent!</h1>
+<p class="muted">You've completed the <b>${h.n}</b> habit</p>
+<div class="card row"><div class="ico">⭐</div><b>+${h.p} eco-points</b></div>
+<div class="card row"><div class="ico">🌍</div><span>You saved ${h.s}</span></div>
+<button class="btn" onclick="go('home')">🏠 Home</button>
+<button class="btn out" onclick="go('progress')">View achievements</button></div>`},
+
+progress(){const m=Math.max(...W);return `
+<h1>My Progress</h1>
+<div class="three"><div class="card st"><b>${S.habits}</b><span class="muted">habits</span></div><div class="card st"><b>${S.points}</b><span class="muted">eco-points</span></div><div class="card st"><b>${S.kg}</b><span class="muted">kg saved</span></div></div>
+<h2>Weekly Progress</h2>
+<div class="card chart">${W.map((v,i)=>`<div class="col"><div class="bw"><div class="bar ${i==T?"on":""}" style="height:${v/m*100}%"></div></div>${D[i]}</div>`).join("")}</div>
+<h2>Achievements</h2>${achievements()}`}
+};
+
+const tabs=()=>`<nav>${[["home","🏠","Home"],["catalog","📖","Catalog"],["progress","📊","Progress"]].map(([s,i,n])=>`<button class="${screen==s?"on":""}" onclick="go('${s}')">${i}<span>${n}</span></button>`).join("")}</nav>`;
+
+function render(){$app.innerHTML=V[screen]()+(["home","catalog","progress"].includes(screen)?tabs():"");window.scrollTo(0,0)}
+function go(s){screen=s;render()}
+function openHabit(id){cur=id;go("detail")}
+function complete(){const h=byId(cur);if(h.done)return;h.done=true;S.habits++;S.points+=h.p;S.kg=+(S.kg+h.kg).toFixed(1);W[T]++;go("done")}
+render();
+</script>
+</body>
+</html>
